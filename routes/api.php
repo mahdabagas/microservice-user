@@ -19,3 +19,5 @@ Route::get('/users/{user}', [UserController::class, 'show']);
 Route::post('/users', [UserController::class, 'store']);
 Route::patch('/users/{user}', [UserController::class, 'update']);
 Route::delete('/users/{user}', [UserController::class, 'destroy']);
+
+Route::post('/login', [UserController::class, 'login']);

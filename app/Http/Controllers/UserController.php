@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+
 
 class UserController extends Controller
 {
@@ -12,7 +17,9 @@ class UserController extends Controller
      */
     public function index()
     {
-        return User::all();
+        $users = User::all();
+
+        return response()->json($users, 200);
     }
 
     /**
@@ -26,7 +33,7 @@ class UserController extends Controller
             'email'=>'required',
             'password'=>'required',
         ]);
-        echo($validated['role']);
+
         $user = User::create($validated);
 
         return response()->json($user, 201);
@@ -65,5 +72,24 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json(null, 204);
+    }
+
+    // Login 
+    public function login(Request $request, User $user)
+    {
+        if (! Auth::attempt($request->only('email', 'password'))) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        $user = User::where('email', $request->email)->firstOrFail();
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login success',
+            'token' => $token,
+        ]);
     }
 }
