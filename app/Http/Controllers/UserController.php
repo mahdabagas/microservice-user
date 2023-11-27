@@ -24,7 +24,7 @@ class UserController extends Controller
                 'success' => false,
                 'message' => 'user data not found',
                 'data' => null
-            ], 400);
+            ], 500);
         }
 
         return response()->json([
@@ -92,28 +92,67 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, string $id)
     {
-        $validated = $request->validate([
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user data not found',
+                'data' => null
+            ], 400);
+        }
+
+        $validated = Validator::make($request->all(), [
             'name' => 'required',
             'role' => 'required',
-            'email' => 'required',
-            'password' => 'required',
+            'email' => 'required|email',
         ]);
 
-        $user->update($validated);
+        if ($validated->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validated->messages(),
+                'data' => null
+            ], 400);
+        }
 
-        return response()->json($user, 200);
+        $user->update([
+            'name' => $request['name'],
+            'role' => $request['role'],
+            'email' => $request['email'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'user updated successfully',
+            'data' => $user
+        ], 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
+    public function destroy(string $id)
     {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user data not found',
+                'data' => null
+            ], 400);
+        }
+        
         $user->delete();
 
-        return response()->json(null, 204);
+        return response()->json([
+            'success' => true,
+            'message' => 'successfully delete data',
+            'data' => null
+        ]);
     }
 
     // Login 
