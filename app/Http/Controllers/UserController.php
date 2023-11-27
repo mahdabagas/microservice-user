@@ -19,7 +19,19 @@ class UserController extends Controller
     {
         $users = User::all();
 
-        return response()->json($users, 200);
+        if (!$users) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user data not found',
+                'data' => null
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'successfully retrieve data',
+            'data' => $users
+        ]);
     }
 
     /**
@@ -27,24 +39,54 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name'=>'required',
-            'role'=>'required',
-            'email'=>'required',
-            'password'=>'required',
+        $validated = Validator::make($request->all(), [
+            'name' => 'required',
+            'role' => 'required',
+            'email' => 'required|email',
+            'password' => 'required',
         ]);
 
-        $user = User::create($validated);
+        if ($validated->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validated->messages(),
+                'data' => null
+            ], 400);
+        }
 
-        return response()->json($user, 201);
+        $user = User::create([
+            'name' => $request['name'],
+            'role' => $request['role'],
+            'email' => $request['email'],
+            'password' => $request['password'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'user created successfully',
+            'data' => $user
+        ], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(User $user)
+    public function show(string $id)
     {
-        return $user;
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user data not found',
+                'data' => null
+            ], 400);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'successfully retrieve data',
+            'data' => $user
+        ]);
     }
 
     /**
@@ -53,10 +95,10 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name'=>'required',
-            'role'=>'required',
-            'email'=>'required',
-            'password'=>'required',
+            'name' => 'required',
+            'role' => 'required',
+            'email' => 'required',
+            'password' => 'required',
         ]);
 
         $user->update($validated);
@@ -77,7 +119,7 @@ class UserController extends Controller
     // Login 
     public function login(Request $request, User $user)
     {
-        if (! Auth::attempt($request->only('email', 'password'))) {
+        if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
